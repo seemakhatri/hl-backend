@@ -22,6 +22,39 @@ app.get('/', (req, res) => {
 });
 
 
+app.post('/api/feedback', (req, res) => {
+    const { feedback } = req.body;
+  
+    if (!feedback) {
+      return res.status(400).json({ message: 'Feedback is required' });
+    }
+  
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+      }
+    });
+  
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to: 'goyalsachin398@gmail.com', 
+      subject: 'Feedback Submission',
+      text: feedback
+    };
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Error sending feedback' });
+      }
+      console.log('Email sent:', info.response);
+      res.status(200).json({ message: 'Feedback submitted successfully' });
+    });
+  });
+
+
 app.post('/api/inquiries', (req, res) => {
     const { type, fundName, isin, sedolOrTicker, stockName } = req.body;
 
