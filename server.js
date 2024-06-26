@@ -110,6 +110,8 @@ app.post('/api/inquiries', (req, res) => {
             return res.status(500).json({ message: 'Error sending email' });
         }
         console.log('Email sent:', info.response);
+
+        feedbacks.push(feedback);
         res.status(200).json({ message: 'Inquiry sent successfully' });
     });
 
