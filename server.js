@@ -115,6 +115,9 @@ app.post('/api/inquiries', (req, res) => {
 
 });
 
+app.get('/api/feedbacks', (req, res) => {
+    res.json(feedbacks);
+  });
   
 
 const PORT = process.env.PORT || 3000;
