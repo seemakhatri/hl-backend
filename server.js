@@ -26,18 +26,20 @@ app.get('/', (req, res) => {
 
 app.post('/api/feedback', (req, res) => {
     const { userName, feedback } = req.body;
-  
+
     const newFeedback = {
       id: uuidv4(),
       userName: userName,
       content: feedback,
       timestamp: new Date()
     };
-  
-    feedbacks.push(newFeedback);
-    res.status(201).json({ message: 'Feedback submitted successfully', feedback: newFeedback });
-  });
-  
+
+    feedbacks.push(newFeedback); // Push new feedback to array
+
+    // Send response with updated feedbacks array
+    res.status(201).json({ message: 'Feedback submitted successfully', feedbacks: feedbacks });
+});
+
   // Endpoint to get all feedback
   app.get('/api/feedbacks', (req, res) => {
     res.status(200).json(feedbacks);
