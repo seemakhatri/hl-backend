@@ -2,10 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
+let feedbacks = []; 
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -23,22 +25,35 @@ app.get('/', (req, res) => {
 
 
 app.post('/api/feedback', (req, res) => {
-    const { feedback } = req.body;
+    const { userName, feedback } = req.body;
+  
+    const newFeedback = {
+      id: uuidv4(),
+      userName: userName,
+      content: feedback,
+      timestamp: new Date()
+    };
+  
+    feedbacks.push(newFeedback);
+    res.status(201).json({ message: 'Feedback submitted successfully', feedback: newFeedback });
+  });
+  
+  // Endpoint to get all feedback
+  app.get('/api/feedbacks', (req, res) => {
+    res.status(200).json(feedbacks);
+  });
 
-    if (!feedback) {
-        return res.status(400).json({ message: 'Feedback is required' });
+  app.delete('/api/feedback/:id', (req, res) => {
+    const feedbackId = req.params.id;
+    const index = feedbacks.findIndex(f => f.id === feedbackId);
+    if (index !== -1) {
+      feedbacks.splice(index, 1);
+      res.status(200).json({ message: 'Feedback deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Feedback not found' });
     }
-
-    // Assuming feedbacks is an array defined elsewhere to store feedbacks
-    feedbacks.push({
-        id: feedbacks.length + 1, // Generate a unique ID
-        content: feedback,
-        timestamp: new Date() // Capture the timestamp
-    });
-
-    res.status(200).json({ message: 'Feedback submitted successfully' });
-});
-
+  });
+  
 
 
 app.post('/api/inquiries', (req, res) => {
@@ -103,10 +118,6 @@ app.post('/api/inquiries', (req, res) => {
 
 });
 
-app.get('/api/feedbacks', (req, res) => {
-    res.json(feedbacks);
-  });
-  
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
