@@ -57,15 +57,21 @@ app.post('/api/feedback', (req, res) => {
 });
 
 app.get('/api/feedbacks', (req, res) => {
-  feedbackCollection.find().toArray()
-    .then(feedbacks => {
-      res.status(200).json(feedbacks);
-    })
-    .catch(error => {
-      console.error('Error retrieving feedbacks:', error);
-      res.status(500).json({ message: 'Error retrieving feedbacks' });
-    });
-});
+    feedbackCollection.find().toArray()
+      .then(feedbacks => {
+        res.status(200).json(feedbacks.map(feedback => ({
+          _id: feedback.id,  // Map 'id' to '_id' for Angular compatibility
+          feedback: feedback.content,
+          userName: feedback.userName,
+          timestamp: feedback.timestamp
+        })));
+      })
+      .catch(error => {
+        console.error('Error retrieving feedbacks:', error);
+        res.status(500).json({ message: 'Error retrieving feedbacks' });
+      });
+  });
+  
 
 app.delete('/api/feedback/:id', (req, res) => {
   const feedbackId = req.params.id;
