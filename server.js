@@ -23,7 +23,11 @@ MongoClient.connect(mongoUri)
   .catch(error => console.error(error));
 
 app.use(bodyParser.json());
-app.use(cors());
+const corsOptions = {
+    origin: 'https://hargreaves-lansdown.onrender.com',
+    optionsSuccessStatus: 200 
+  };
+  app.use(cors(corsOptions));
 
 // CORS headers middleware
 app.use((req, res, next) => {
