@@ -76,7 +76,6 @@ app.post('/api/feedback', (req, res) => {
     });
 });
 
-// Retrieve feedbacks route
 app.get('/api/feedbacks', (req, res) => {
   feedbackCollection.find().toArray()
     .then(feedbacks => {
@@ -88,8 +87,8 @@ app.get('/api/feedbacks', (req, res) => {
       })));
     })
     .catch(error => {
-      console.error('Error retrieving feedbacks:', error);
-      res.status(500).json({ message: 'Error retrieving feedbacks' });
+      console.error('Error retrieving feedbacks:', error); // This will help identify the issue
+      res.status(500).json({ message: 'Error retrieving feedbacks', error: error.message }); // Return detailed error message
     });
 });
 
