@@ -6,40 +6,56 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 
+// Initialize the app
 const app = express();
 
+// Environment variables
 const mongoUri = process.env.MONGO_URI;
 const dbName = 'portfolio-feedbacks';
 const collectionName = 'feedback';
 
 let feedbackCollection;
 
-MongoClient.connect(mongoUri)
-  .then(client => {
+async function connectToDatabase() {
+  try {
+    const client = await MongoClient.connect(mongoUri);
     const db = client.db(dbName);
     feedbackCollection = db.collection(collectionName);
     console.log('Connected to MongoDB');
-  })
-  .catch(error => console.error(error));
+  } catch (error) {
+    console.error('MongoDB connection failed:', error);
+  }
+}
 
+connectToDatabase();
+
+// Middleware
 app.use(bodyParser.json());
-const corsOptions = {
-    origin: 'https://hargreaves-lansdown.onrender.com',
-    optionsSuccessStatus: 200 
-  };
-  app.use(cors(corsOptions));
 
+// CORS setup
+const allowedOrigins = ['https://hargreaves-lansdown.onrender.com', 'http://localhost:3000'];
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 
+// Set security headers
 app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "fullscreen=(self), geolocation=()");
   next();
 });
 
-
+// Root route
 app.get('/', (req, res) => {
   res.send('Welcome to the backend server!');
 });
 
+// Feedback submission route
 app.post('/api/feedback', (req, res) => {
   const { userName, feedback } = req.body;
 
@@ -60,23 +76,24 @@ app.post('/api/feedback', (req, res) => {
     });
 });
 
+// Retrieve feedbacks route
 app.get('/api/feedbacks', (req, res) => {
-    feedbackCollection.find().toArray()
-      .then(feedbacks => {
-        res.status(200).json(feedbacks.map(feedback => ({
-          _id: feedback.id, 
-          feedback: feedback.content,
-          userName: feedback.userName,
-          timestamp: feedback.timestamp
-        })));
-      })
-      .catch(error => {
-        console.error('Error retrieving feedbacks:', error);
-        res.status(500).json({ message: 'Error retrieving feedbacks' });
-      });
-  });
-  
+  feedbackCollection.find().toArray()
+    .then(feedbacks => {
+      res.status(200).json(feedbacks.map(feedback => ({
+        _id: feedback.id, 
+        feedback: feedback.content,
+        userName: feedback.userName,
+        timestamp: feedback.timestamp
+      })));
+    })
+    .catch(error => {
+      console.error('Error retrieving feedbacks:', error);
+      res.status(500).json({ message: 'Error retrieving feedbacks' });
+    });
+});
 
+// Feedback deletion route
 app.delete('/api/feedback/:id', (req, res) => {
   const feedbackId = req.params.id;
 
@@ -94,11 +111,13 @@ app.delete('/api/feedback/:id', (req, res) => {
     });
 });
 
+// Inquiry handling and email notification route
 app.post('/api/inquiries', (req, res) => {
   const { type, fundName, isin, sedolOrTicker, stockName } = req.body;
 
   console.log(`Received ${type} request with data:`, req.body);
 
+  // Validate required fields for the inquiries
   if (type === 'fund') {
     if (!fundName || !isin || !sedolOrTicker) {
       return res.status(400).json({ message: 'Missing required fields for fund inquiry' });
@@ -111,6 +130,7 @@ app.post('/api/inquiries', (req, res) => {
     return res.status(400).json({ message: 'Invalid inquiry type' });
   }
 
+  // Nodemailer setup for email notifications
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -119,6 +139,7 @@ app.post('/api/inquiries', (req, res) => {
     }
   });
 
+  // Email options based on inquiry type
   const mailOptions = {
     from: process.env.GMAIL_USER,
     to: 'goyalsachin398@gmail.com',
@@ -138,6 +159,7 @@ app.post('/api/inquiries', (req, res) => {
     `
   };
 
+  // Send email
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error('Error sending email:', error);
@@ -148,6 +170,7 @@ app.post('/api/inquiries', (req, res) => {
   });
 });
 
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
