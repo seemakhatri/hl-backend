@@ -29,13 +29,13 @@ const corsOptions = {
   };
   app.use(cors(corsOptions));
 
-// CORS headers middleware
+
 app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "fullscreen=(self), geolocation=()");
   next();
 });
 
-// Define a simple route for the root URL
+
 app.get('/', (req, res) => {
   res.send('Welcome to the backend server!');
 });
@@ -64,7 +64,7 @@ app.get('/api/feedbacks', (req, res) => {
     feedbackCollection.find().toArray()
       .then(feedbacks => {
         res.status(200).json(feedbacks.map(feedback => ({
-          _id: feedback.id,  // Map 'id' to '_id' for Angular compatibility
+          _id: feedback.id, 
           feedback: feedback.content,
           userName: feedback.userName,
           timestamp: feedback.timestamp
@@ -111,7 +111,6 @@ app.post('/api/inquiries', (req, res) => {
     return res.status(400).json({ message: 'Invalid inquiry type' });
   }
 
-  // Example code for sending email (for both fund and stock)
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
